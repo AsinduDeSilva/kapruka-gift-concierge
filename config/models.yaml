@@ -1,0 +1,19 @@
+openrouter:
+  chat:
+    general: openai/gpt-4o-mini           
+    strong: openai/gpt-4o                  
+    reason: openai/o3-mini                 
+  
+  embedding:
+    default: openai/text-embedding-3-small  # 1536 dimensions
+    large: openai/text-embedding-3-large    # 3072 dimensions
+
+
+openai:
+  chat:
+    general: gpt-4o-mini
+    strong: gpt-4o
+    reason: o3-mini
+  embedding:
+    default: text-embedding-3-small
+    large: text-embedding-3-large
