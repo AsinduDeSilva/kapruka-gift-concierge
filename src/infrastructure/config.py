@@ -1,7 +1,6 @@
 import os
 import yaml
 from pathlib import Path
-from loguru import logger
 from dotenv import load_dotenv
 from typing import Any, Dict, Optional
 
@@ -40,7 +39,7 @@ LLM_PROVIDER = _get_nested(_PARAMS, "llm", "provider", default="openrouter")
 LLM_TIER = _get_nested(_PARAMS, "llm", "tier", default="general")
 LLM_TEMPERATURE = _get_nested(_PARAMS, "llm", "temperature", default=0.0)
 LLM_MAX_TOKENS = _get_nested(_PARAMS, "llm", "max_tokens", default=2000)
-LLM_STREAMING = _get_nested(_PARAMS, "llm", "streaming", default=False)
+LLM_STREAMING = bool(_get_nested(_PARAMS, "llm", "streaming", default=False))
 OPENROUTER_BASE_URL = _get_nested(_PARAMS, "llm", "openrouter_base_url", default="https://openrouter.ai/api/v1")
 
 
@@ -74,6 +73,22 @@ if "large" in EMBEDDING_MODEL.lower():
     EMBEDDING_DIM = 3072
 elif "small" in EMBEDDING_MODEL.lower() or "ada" in EMBEDDING_MODEL.lower():
     EMBEDDING_DIM = 1536
+
+
+
+def get_api_key(provider: str) -> Optional[str]:
+    key_map = {
+        "openrouter": "OPENROUTER_API_KEY",
+        "openai": "OPENAI_API_KEY",
+        "anthropic": "ANTHROPIC_API_KEY",
+        "google": "GOOGLE_API_KEY",
+        "gemini": "GOOGLE_API_KEY",  
+        "groq": "GROQ_API_KEY",
+        "deepseek": "DEEPSEEK_API_KEY",
+        "tavily": "TAVILY_API_KEY",
+    }
+    env_var = key_map.get(provider, f"{provider.upper()}_API_KEY")
+    return os.getenv(env_var)
 
 
 
