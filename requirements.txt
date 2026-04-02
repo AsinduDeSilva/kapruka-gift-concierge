@@ -2,8 +2,6 @@ playwright
 loguru
 PyYAML
 python-dotenv
-qdrant-client
-# sentence-transformers
 
 langchain
 langchain-core
@@ -11,3 +9,6 @@ langchain-community
 langchain-openai
 
 openai
+
+qdrant-client
+fastembed

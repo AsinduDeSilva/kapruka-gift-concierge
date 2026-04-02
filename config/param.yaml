@@ -5,10 +5,12 @@ llm:
   max_tokens: 2000
   streaming: false
   openrouter_base_url: https://openrouter.ai/api/v1 
-    
 
 embedding:
   provider: openrouter
   tier: default
   batch_size: 100
   show_progress: false
+
+qdrant:
+  collection_name: kapruka_catalog

@@ -7,8 +7,8 @@ from typing import Any, Dict, Optional
 load_dotenv()
 
 
-_PROJECT_ROOT = Path(__file__).parent.parent.parent
-_CONFIG_DIR = _PROJECT_ROOT / "config"
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+_CONFIG_DIR = PROJECT_ROOT / "config"
 
 
 # YAML Config Loading
@@ -89,6 +89,9 @@ def get_api_key(provider: str) -> Optional[str]:
     }
     env_var = key_map.get(provider, f"{provider.upper()}_API_KEY")
     return os.getenv(env_var)
+
+#qdrant
+QDRANT_COLLECTION_NAME = _get_nested(_PARAMS, "qdrant", "collection_name", default="kapruka_catalog")
 
 
 
