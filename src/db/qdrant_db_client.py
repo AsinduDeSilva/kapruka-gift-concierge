@@ -85,7 +85,7 @@ def collection_info(collection_name: str = QDRANT_COLLECTION_NAME) -> Dict[str, 
 def upsert_products(
     products: List,
     dense_vectors: List[List[float]],
-    sparse_vectors: List[List[float]],
+    sparse_vectors: List,
     collection_name: str = QDRANT_COLLECTION_NAME,
 ) -> None:
 
@@ -111,7 +111,7 @@ def upsert_products(
             )
         )
 
-    client.upsert(collection_name="kapruka_catalog", points=points)
+    client.upsert(collection_name=collection_name, points=points)
 
 
     logger.info("Upserted points into '{}'", collection_name)
