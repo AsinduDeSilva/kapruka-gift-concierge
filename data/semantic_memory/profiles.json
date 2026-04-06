@@ -1,0 +1,41 @@
+{
+    "kamalperera": {
+        "wife": {
+            "preferences": [
+                "dark chocolate",
+                "flowers"
+            ],
+            "allergies": []
+        },
+        "son": {
+            "preferences": [
+                "toys"
+            ],
+            "allergies": [
+                "peanuts",
+                "nuts"
+            ]
+        }
+    },
+    "amalidesilva": {
+        "husband": {
+            "preferences": [
+                "jewellery"
+            ],
+            "allergies": []
+        },
+        "daughter": {
+            "preferences": [
+                "toys"
+            ]
+        }
+    },
+    "asindudesilva": {
+        "myself": {
+            "preferences": [],
+            "allergies": [
+                "fruits"
+            ]
+        }
+    }
+}
