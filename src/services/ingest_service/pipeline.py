@@ -5,8 +5,8 @@ from typing import List
 from loguru import logger
 from src.db.qdrant_db_client import ensure_collection, upsert_products
 from src.infrastructure.config import PROJECT_ROOT, EMBEDDING_BATCH_SIZE
-from src.infrastructure.llm.embeddings import get_default_embeddings
-from fastembed import SparseTextEmbedding
+from src.infrastructure.llm.embeddings import get_dense_embedder, get_sparse_embedder
+
 
 
 def load_catalog():
@@ -51,7 +51,7 @@ def get_product_chunks(products: List):
 def get_dense_embeddings(chunks: List, batch_size=EMBEDDING_BATCH_SIZE):
     logger.info("Starting dense embedding generation")
 
-    dense_embedder = get_default_embeddings()
+    dense_embedder = get_dense_embedder()
     all_embeddings = []
 
     start_time = time.time()
@@ -88,7 +88,7 @@ def get_sparse_embeddings(chunks: List):
 
     start_time = time.time()
 
-    sparse_embedder = SparseTextEmbedding(model_name="Qdrant/bm25")
+    sparse_embedder = get_sparse_embedder()
     sparse_vectors = list(sparse_embedder.embed(chunks))
 
     total_time = time.time() - start_time

@@ -2,9 +2,8 @@ import uuid
 
 from loguru import logger
 from qdrant_client import QdrantClient
-from fastembed import SparseTextEmbedding
 from typing import Any, Dict, List, Optional
-from src.infrastructure.llm.embeddings import get_default_embeddings
+from src.infrastructure.llm.embeddings import get_dense_embedder, get_sparse_embedder
 from qdrant_client.models import (
     Distance,
     PointStruct,
@@ -123,13 +122,13 @@ def search_products(
     collection_name: str = QDRANT_COLLECTION_NAME,
 ) -> List[Dict[str, Any]]:
 
-    client = get_qdrant_client()
-
-    dense_embedder = get_default_embeddings()
+    dense_embedder = get_dense_embedder()
     dense_query = dense_embedder.embed_query(query)
 
-    sparse_embedder = SparseTextEmbedding(model_name="Qdrant/bm25")
+    sparse_embedder = get_sparse_embedder()
     sparse_query = list(sparse_embedder.embed([query]))[0].as_object()
+
+    client = get_qdrant_client()
 
     response = client.query_points(
         collection_name=collection_name,
@@ -167,8 +166,6 @@ def collection_exists(collection_name: str = QDRANT_COLLECTION_NAME) -> bool:
     client = get_qdrant_client()
     existing = [c.name for c in client.get_collections().collections]
     return collection_name in existing
-
-
 
 
 

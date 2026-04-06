@@ -1,4 +1,6 @@
 from typing import Any
+
+from fastembed import SparseTextEmbedding
 from langchain_openai import OpenAIEmbeddings
 from src.infrastructure.config import (
     EMBEDDING_MODEL,
@@ -30,6 +32,24 @@ def get_default_embeddings(
 
     return OpenAIEmbeddings(**llm_kwargs)
 
+_dense_embedder = None
 
+def get_dense_embedder():
+    global _dense_embedder
+    if _dense_embedder is not None:
+        return _dense_embedder
+
+    _dense_embedder = get_default_embeddings()
+    return _dense_embedder
+
+_sparse_embedder = None
+
+def get_sparse_embedder():
+    global _sparse_embedder
+    if _sparse_embedder is not None:
+        return _sparse_embedder
+
+    _sparse_embedder = SparseTextEmbedding(model_name="Qdrant/bm25")
+    return _sparse_embedder
 
 
