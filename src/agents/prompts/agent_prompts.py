@@ -31,13 +31,14 @@ router_system_prompt = """
     
     Set the following routing flags to true or false based on what actions are required:
     
-    1. "update_profile": true ONLY IF the user provides NEW preferences, allergies, or facts.
+    1. "update_profile": true ONLY IF the user provides NEW likes, dislikes, preferences, allergies, or facts of a recipient.
     2. "search_catalog": true IF the user wants to look for, buy, or get recommendations for gifts.
     3. "check_logistics": true IF the user asks about delivery availability to a specific area.
     4. "direct_chat": true IF the user is just saying hello, thank you, or making small talk that requires NO tools or catalog searches. (If this is true, the other flags should generally be false).
     
     Extraction rules:
     - If search_catalog is true, generate an 'optimized_search_query' (strip out conversational filler, locations, and combine the core product request with relevant profile constraints like allergies).
+    - If check_logistics is true, extract the 'target_location'.
     
     You MUST output valid JSON strictly matching this schema:
     {{
@@ -45,6 +46,7 @@ router_system_prompt = """
         "search_catalog": boolean,
         "check_logistics": boolean,
         "direct_chat": boolean,
+        "target_location": "String (District/City) or null",
         "optimized_search_query": "String for hybrid vector search or null"
     }}
 """
@@ -101,7 +103,7 @@ logistics_system_prompt = """
     }}
 """
 
-logistics_user_prompt = f"""
+logistics_user_prompt = """
     Origin: Colombo
     Target Destination: {{target_location}}
     User query: {{optimized_search_query}}

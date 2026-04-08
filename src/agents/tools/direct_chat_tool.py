@@ -16,8 +16,6 @@ class DirectChatTool:
             ("user", direct_chat_user_prompt)
         ])
 
-        print(prompt)
-
         chain = prompt | self.llm | StrOutputParser()
 
         return chain.invoke({

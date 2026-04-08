@@ -1,9 +1,9 @@
 import json
 
-from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
 from src.agents.prompts.agent_prompts import router_user_prompt, router_system_prompt
+from src.agents.schemas import RouterDecision
 from src.infrastructure.llm.llm_provider import get_chat_llm
 from src.memory.semantic_memory_manager import SemanticMemoryManager
 
@@ -13,7 +13,7 @@ class Router:
         self.llm = get_chat_llm()
         self.memory_manager = SemanticMemoryManager()
 
-    def route(self, user_query, st_memory, user_id):
+    def route(self, user_query, st_memory, user_id) -> RouterDecision:
         current_profile = self.memory_manager.get_profile(user_id)
 
         prompt = ChatPromptTemplate.from_messages([
@@ -21,12 +21,11 @@ class Router:
             ("user", router_user_prompt),
         ])
 
-        chain = prompt | self.llm | JsonOutputParser()
+        chain = prompt | self.llm.with_structured_output(RouterDecision)
 
-        res = chain.invoke({
+        return chain.invoke({
             "current_profile": json.dumps(current_profile, indent=2),
             "st_memory": st_memory,
             "user_query": user_query
         })
 
-        return res
