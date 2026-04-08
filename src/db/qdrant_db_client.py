@@ -117,16 +117,17 @@ def upsert_products(
 
 
 def search_products(
-    query: str,
+    vector_query: str,
+    keyword_query: str,
     top_k: int = 5,
     collection_name: str = QDRANT_COLLECTION_NAME,
 ) -> List[Dict[str, Any]]:
 
     dense_embedder = get_dense_embedder()
-    dense_query = dense_embedder.embed_query(query)
+    dense_query = dense_embedder.embed_query(vector_query)
 
     sparse_embedder = get_sparse_embedder()
-    sparse_query = list(sparse_embedder.embed([query]))[0].as_object()
+    sparse_query = list(sparse_embedder.embed([keyword_query]))[0].as_object()
 
     client = get_qdrant_client()
 
