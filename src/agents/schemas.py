@@ -7,7 +7,8 @@ class RouterDecision(BaseModel):
     check_logistics: bool = Field(description="true IF the user asks about delivery availability to a specific area.")
     direct_chat: bool = Field(description="true IF the user is just saying hello, thank you, or making small talk that requires NO tools or catalog searches.")
     target_location: Optional[str] = Field(description="String (District/City) or null")
-    optimized_search_query: Optional[str] = Field(description="String for hybrid vector search or null")
+    vector_query: str = Field(description="natural language query")
+    keyword_query: str = Field(description="compressed keyword query")
 
 class LogisticsFeasibility(BaseModel):
     deliverable: bool = Field(description="Whether the product can be safely transported to the target district.")

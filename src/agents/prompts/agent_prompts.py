@@ -37,17 +37,25 @@ router_system_prompt = """
     4. "direct_chat": true IF the user is just saying hello, thank you, or making small talk that requires NO tools or catalog searches. (If this is true, the other flags should generally be false).
     
     Extraction rules:
-    - If search_catalog is true, generate an 'optimized_search_query' (strip out conversational filler, locations, and combine the core product request with relevant profile constraints like allergies).
-    - If check_logistics is true, extract the 'target_location'.
+    - If "search_catalog" is true:
+      - Generate:
+        • "vector_query": natural sentence with intent + recipient + preferences  
+        • "keyword_query": short keywords (no filler), include product types/categories
+      - Remove conversational filler and location
+      - Keep keywords relevant (no over-expansion)
+    
+    - If "check_logistics" is true:
+      - Extract "target_location" (District/City only)
     
     You MUST output valid JSON strictly matching this schema:
     {{
-        "update_profile": boolean,
-        "search_catalog": boolean,
-        "check_logistics": boolean,
-        "direct_chat": boolean,
-        "target_location": "String (District/City) or null",
-        "optimized_search_query": "String for hybrid vector search or null"
+      "update_profile": boolean,
+      "search_catalog": boolean,
+      "check_logistics": boolean,
+      "direct_chat": boolean,
+      "target_location": "String (District/City) or null",
+      "vector_query": "natural language query",
+      "keyword_query": "compressed keyword query"
     }}
 """
 
@@ -105,8 +113,8 @@ logistics_system_prompt = """
 
 logistics_user_prompt = """
     Origin: Colombo
-    Target Destination: {{target_location}}
-    User query: {{optimized_search_query}}
+    Target Destination: {target_location}
+    User query: {optimized_search_query}
 
     Evaluate feasibility and output JSON:
 """
