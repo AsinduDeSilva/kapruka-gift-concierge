@@ -13,3 +13,7 @@ class RouterDecision(BaseModel):
 class LogisticsFeasibility(BaseModel):
     deliverable: bool = Field(description="Whether the product can be safely transported to the target district.")
     reason: str = Field(description="A brief, 1-sentence explanation of why it is or isn't feasible based on physics, distance, or climate.")
+
+class ReflectionCritique(BaseModel):
+    is_safe: bool = Field(description="True if the recommendation is safe and has no allergy violations, False otherwise.")
+    violations: str = Field(description="List of violations found, or 'None' if safe.")
