@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.db.core import engine, Base
 from dotenv import load_dotenv
 
 
 load_dotenv()
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Kapruka Gift Concierge API",
