@@ -1,7 +1,5 @@
-import json
+import concurrent.futures
 
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
 from loguru import logger
 
 from src.agents.reflection_agent import ReflectionAgent
@@ -17,15 +15,15 @@ from src.memory.short_term_memory_manager import ShortTermMemoryManager
 
 class AgentOrchestrator:
     def __init__(
-        self,
-        llm,
-        semantic_memory,
-        router,
-        preference_tool,
-        catalog_tool,
-        logistics_tool,
-        direct_chat_tool,
-        reflection_agent
+            self,
+            llm,
+            semantic_memory,
+            router,
+            preference_tool,
+            catalog_tool,
+            logistics_tool,
+            direct_chat_tool,
+            reflection_agent
     ):
         self.llm = llm
         self.semantic_memory = semantic_memory
@@ -43,34 +41,53 @@ class AgentOrchestrator:
         decision = self.router.route(user_query, st_memory, user_id)
         logger.info(f"Routing decision: {decision}")
 
-        # Preference Update
-        if decision.update_profile:
-            logger.info("Updating user profile...")
-            self.preference_tool.update_semantic_memory(user_id, user_query)
-
-        # Direct Chat
-        if decision.direct_chat:
-            logger.info("Handling direct chat...")
-            response = self.direct_chat_tool.chat(user_query, st_memory)
-            st_memory.add_message("user", user_query)
-            st_memory.add_message("assistant", response)
-            return response
-
         tool_results = {}
+        direct_chat_response = ""
 
-        # Catalog Search
-        if decision.search_catalog:
-            logger.info("Searching catalog...")
-            catalog_response = self.catalog_tool.search(decision.vector_query, decision.keyword_query)
-            tool_results["catalog_results"] = catalog_response
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            concurrent_tasks = {}
 
-        # Check Logistics Feasibility
-        if decision.check_logistics:
-            logger.info("Checking logistics feasibility...")
-            logistics_response = self.logistics_tool.check_delivery_feasibility(
-                decision.target_location, decision.vector_query
-            )
-            tool_results["logistics_results"] = logistics_response.model_dump()
+            # Profile Update
+            if decision.update_profile:
+                logger.info("Scheduling user profile update...")
+                concurrent_tasks[executor.submit(self.preference_tool.update_semantic_memory, user_id,
+                                               user_query)] = "preference_update"
+
+            # Direct Chat
+            if decision.direct_chat:
+                logger.info("Scheduling direct chat...")
+                concurrent_tasks[executor.submit(self.direct_chat_tool.chat, user_query, st_memory)] = "direct_chat"
+            else:
+                # Catalog Search
+                if decision.search_catalog:
+                    logger.info("Scheduling catalog search...")
+                    concurrent_tasks[executor.submit(self.catalog_tool.search, decision.vector_query,
+                                                   decision.keyword_query)] = "catalog_search"
+
+                # Check Logistics Feasibility
+                if decision.check_logistics:
+                    logger.info("Scheduling logistics feasibility check...")
+                    concurrent_tasks[
+                        executor.submit(self.logistics_tool.check_delivery_feasibility, decision.target_location,
+                                        decision.vector_query)] = "logistics_check"
+
+            for future in concurrent.futures.as_completed(concurrent_tasks):
+                task_name = concurrent_tasks[future]
+                try:
+                    result = future.result()
+                    if task_name == "direct_chat":
+                        direct_chat_response = result
+                    elif task_name == "catalog_search":
+                        tool_results["catalog_results"] = result
+                    elif task_name == "logistics_check":
+                        tool_results["logistics_results"] = result.model_dump()
+                except Exception as e:
+                    logger.error(f"Task '{task_name}' generated an exception: {e}")
+
+        if decision.direct_chat:
+            st_memory.add_message("user", user_query)
+            st_memory.add_message("assistant", direct_chat_response)
+            return direct_chat_response
 
         # Reflection Loop
         final_response = self.reflection_agent.run(
@@ -81,8 +98,9 @@ class AgentOrchestrator:
         )
         st_memory.add_message("user", user_query)
         st_memory.add_message("assistant", final_response)
-        
+
         return final_response
+
 
 def build_orchestrator():
     llm = get_chat_llm()
