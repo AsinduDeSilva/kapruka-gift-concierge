@@ -12,3 +12,12 @@ openai
 
 qdrant-client
 fastembed
+
+# FastAPI and backend
+fastapi
+uvicorn
+sqlalchemy
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+email-validator
