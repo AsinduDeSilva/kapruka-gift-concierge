@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 
 from src.api.db.core import get_db
 from src.api.db.models import User, Message, ChatSession
-from src.api.schemas.chat import ChatRequest, ChatResponse, SessionResponse
+from src.api.schemas.chat import ChatRequest, ChatResponse, SessionResponse, ProfileResponse
 from src.api.dependencies import get_current_user, get_orchestrator
 from src.agents.orchestrator import AgentOrchestrator
+from src.memory.semantic_memory_manager import SemanticMemoryManager
 from src.memory.short_term_memory_manager import ShortTermMemoryManager
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -20,6 +21,13 @@ def create_session(
     db.commit()
     db.refresh(session)
     return SessionResponse(session_id=session.id)
+
+@router.get("/profile", response_model=ProfileResponse)
+def get_user_profile(
+    user: User = Depends(get_current_user),
+    semantic_memory: SemanticMemoryManager = Depends(SemanticMemoryManager)
+):
+    return ProfileResponse(profile=semantic_memory.get_profile(str(user.id)))
 
 @router.post("", response_model=ChatResponse)
 def chat_endpoint(
@@ -55,4 +63,6 @@ def chat_endpoint(
     db.add(Message(session_id=request.session_id, role="assistant", content=reply_text))
     db.commit()
 
-    return ChatResponse(reply=reply_text)
+    updated_profile = agent_orchestrator.semantic_memory.get_profile(str(user.id))
+
+    return ChatResponse(reply=reply_text, profile=updated_profile)
