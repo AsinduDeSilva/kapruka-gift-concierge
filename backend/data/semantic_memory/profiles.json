@@ -1,0 +1,28 @@
+{
+    "1": {
+        "wife": {
+            "preferences": [
+                "teddy bears"
+            ],
+            "allergies": [
+                "nuts"
+            ]
+        },
+        "son": {
+            "preferences": [],
+            "allergies": [
+                "mango"
+            ]
+        }
+    },
+    "2": {
+        "wife": {
+            "preferences": [
+                "mango"
+            ],
+            "allergies": [
+                "nuts"
+            ]
+        }
+    }
+}

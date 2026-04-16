@@ -13,7 +13,6 @@ openai
 qdrant-client
 fastembed
 
-# FastAPI and backend
 fastapi
 uvicorn
 sqlalchemy
