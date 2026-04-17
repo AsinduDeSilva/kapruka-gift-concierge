@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
-import { Cake, Flower2, Candy, Shirt, Monitor, BellRing } from "lucide-react";
+import { Cake, Flower2, Candy, Shirt, Monitor, Gem } from "lucide-react";
 
 const CATEGORIES = [
   { name: "Cakes", icon: Cake, href: "https://www.kapruka.com/online/cakes"},
@@ -8,7 +8,7 @@ const CATEGORIES = [
   { name: "Chocolates", icon: Candy, href: "https://www.kapruka.com/online/chocolates"},
   { name: "Clothing", icon: Shirt, href: "https://www.kapruka.com/online/clothing"},
   { name: "Electronics", icon: Monitor, href: "https://www.kapruka.com/online/electronics"},
-  { name: "Jewellery", icon: BellRing, href: "https://www.kapruka.com/online/jewellery"},
+  { name: "Jewellery", icon: Gem, href: "https://www.kapruka.com/online/jewellery"},
 ];
 
 const CategoryGrid = memo(function CategoryGrid() {
