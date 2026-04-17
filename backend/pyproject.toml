@@ -1,8 +1,28 @@
 [project]
 name = "kapruka-gift-concierge"
 version = "0.1.0"
-description = "Kapruka Gift Concierge Project"
-dependencies = []
+description = "Backend with Multi-agent system for Kapruka Gift Concierge"
+dependencies = [
+    "playwright",
+    "loguru",
+    "PyYAML",
+    "python-dotenv",
+    "langchain",
+    "langchain-core",
+    "langchain-community",
+    "langchain-openai",
+    "openai",
+    "qdrant-client",
+    "fastembed",
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "passlib[bcrypt]",
+    "python-jose[cryptography]",
+    "python-multipart",
+    "email-validator",
+    "tzdata"
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]
