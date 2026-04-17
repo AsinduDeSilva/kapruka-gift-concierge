@@ -1,6 +1,7 @@
 import concurrent.futures
 
 from loguru import logger
+from typing import Callable
 
 from src.agents.reflection_agent import ReflectionAgent
 from src.agents.router import Router
@@ -15,15 +16,15 @@ from src.memory.short_term_memory_manager import ShortTermMemoryManager
 
 class AgentOrchestrator:
     def __init__(
-            self,
-            llm,
-            semantic_memory,
-            router,
-            preference_tool,
-            catalog_tool,
-            logistics_tool,
-            direct_chat_tool,
-            reflection_agent
+        self,
+        llm,
+        semantic_memory,
+        router,
+        preference_tool,
+        catalog_tool,
+        logistics_tool,
+        direct_chat_tool,
+        reflection_agent
     ):
         self.llm = llm
         self.semantic_memory = semantic_memory
@@ -34,12 +35,19 @@ class AgentOrchestrator:
         self.direct_chat_tool = direct_chat_tool
         self.reflection_agent = reflection_agent
 
-    def chat(self, user_id: str, user_query: str, st_memory: ShortTermMemoryManager) -> str:
+    def chat(self, user_id: str, user_query: str, st_memory: ShortTermMemoryManager, status_callback: Callable = None) -> str:
+
+        def _status(msg: str):
+            logger.info(msg)
+            if status_callback:
+                status_callback(msg)
+
         logger.info(f"Processing query for user {user_id}: {user_query}")
 
         # Routing
+        _status("Analyzing request and making routing decisions...")
         decision = self.router.route(user_query, st_memory, user_id)
-        logger.info(f"Routing decision: {decision}")
+        _status(f"Routing decision: {decision}")
 
         tool_results = {}
         direct_chat_response = ""
@@ -49,24 +57,24 @@ class AgentOrchestrator:
 
             # Profile Update
             if decision.update_profile:
-                logger.info("Scheduling user profile update...")
+                _status("Analyzing and updating user profile preferences...")
                 concurrent_tasks[executor.submit(self.preference_tool.update_semantic_memory, user_id,
                                                user_query)] = "preference_update"
 
             # Direct Chat
             if decision.direct_chat:
-                logger.info("Scheduling direct chat...")
+                _status("Preparing direct response...")
                 concurrent_tasks[executor.submit(self.direct_chat_tool.chat, user_query, st_memory)] = "direct_chat"
             else:
                 # Catalog Search
                 if decision.search_catalog:
-                    logger.info("Scheduling catalog search...")
+                    _status("Searching Kapruka catalog for best matches...")
                     concurrent_tasks[executor.submit(self.catalog_tool.search, decision.vector_query,
                                                    decision.keyword_query)] = "catalog_search"
 
                 # Check Logistics Feasibility
                 if decision.check_logistics:
-                    logger.info("Scheduling logistics feasibility check...")
+                    _status("Checking logistics and delivery feasibility...")
                     concurrent_tasks[
                         executor.submit(self.logistics_tool.check_delivery_feasibility, decision.target_location,
                                         decision.vector_query)] = "logistics_check"
@@ -90,6 +98,7 @@ class AgentOrchestrator:
             return direct_chat_response
 
         # Reflection Loop
+        _status("Synthesizing final response...")
         final_response = self.reflection_agent.run(
             user_query=user_query,
             tool_results=tool_results,

@@ -1,9 +1,13 @@
+import queue
+import threading
+import json
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from src.api.db.core import get_db
 from src.api.db.models import User, Message, ChatSession
-from src.api.schemas.chat import ChatRequest, ChatResponse, SessionResponse, ProfileResponse
+from src.api.schemas.chat import ChatRequest, SessionResponse, ProfileResponse
 from src.api.dependencies import get_current_user, get_orchestrator
 from src.agents.orchestrator import AgentOrchestrator
 from src.memory.semantic_memory_manager import SemanticMemoryManager
@@ -11,10 +15,11 @@ from src.memory.short_term_memory_manager import ShortTermMemoryManager
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
+
 @router.get("/session", response_model=SessionResponse)
 def create_session(
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+        user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
 ):
     session = ChatSession(user_id=user.id)
     db.add(session)
@@ -22,21 +27,22 @@ def create_session(
     db.refresh(session)
     return SessionResponse(session_id=session.id)
 
+
 @router.get("/profile", response_model=ProfileResponse)
 def get_user_profile(
-    user: User = Depends(get_current_user),
-    semantic_memory: SemanticMemoryManager = Depends(SemanticMemoryManager)
+        user: User = Depends(get_current_user),
+        semantic_memory: SemanticMemoryManager = Depends(SemanticMemoryManager)
 ):
     return ProfileResponse(profile=semantic_memory.get_profile(str(user.id)))
 
-@router.post("", response_model=ChatResponse)
-def chat_endpoint(
-    request: ChatRequest,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    agent_orchestrator: AgentOrchestrator = Depends(get_orchestrator)
-):
 
+@router.post("")
+def chat_endpoint(
+        request: ChatRequest,
+        user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+        agent_orchestrator: AgentOrchestrator = Depends(get_orchestrator)
+):
     session = db.query(ChatSession).filter(
         ChatSession.id == request.session_id,
         ChatSession.user_id == user.id
@@ -53,16 +59,43 @@ def chat_endpoint(
     for msg in db_messages:
         st_memory.add_message(msg.role, msg.content)
 
-    reply_text = agent_orchestrator.chat(
-        user_id=str(user.id),
-        user_query=request.user_query,
-        st_memory=st_memory
-    )
-    
-    db.add(Message(session_id=request.session_id, role="user", content=request.user_query))
-    db.add(Message(session_id=request.session_id, role="assistant", content=reply_text))
-    db.commit()
+    q = queue.Queue()
 
-    updated_profile = agent_orchestrator.semantic_memory.get_profile(str(user.id))
+    def status_callback(msg: str):
+        q.put({"status": msg})
 
-    return ChatResponse(reply=reply_text, profile=updated_profile)
+    def background_task():
+        try:
+            reply_text = agent_orchestrator.chat(
+                user_id=str(user.id),
+                user_query=request.user_query,
+                st_memory=st_memory,
+                status_callback=status_callback
+            )
+            updated_profile = agent_orchestrator.semantic_memory.get_profile(str(user.id))
+            q.put({"final": reply_text, "profile": updated_profile})
+        except Exception as e:
+            q.put({"error": str(e)})
+        finally:
+            q.put(None)
+
+    threading.Thread(target=background_task).start()
+
+    def event_stream():
+        final_reply = None
+        while True:
+            item = q.get()
+            if item is None:
+                break
+
+            if "final" in item:
+                final_reply = item["final"]
+
+            yield f"data: {json.dumps(item)}\n\n"
+
+        if final_reply:
+            db.add(Message(session_id=request.session_id, role="user", content=request.user_query))
+            db.add(Message(session_id=request.session_id, role="assistant", content=final_reply))
+            db.commit()
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
