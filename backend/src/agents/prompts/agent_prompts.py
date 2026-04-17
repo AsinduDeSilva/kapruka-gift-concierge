@@ -39,8 +39,8 @@ router_system_prompt = """
     Extraction rules:
     - If "search_catalog" is true:
       - Generate:
-        • "vector_query": natural sentence with intent + recipient + preferences  
-        • "keyword_query": short keywords (no filler), include product types/categories
+        • "vector_query": natural sentence with intent and RECIPIENT'S PREFERENCES 
+        • "keyword_query": short keywords (no filler), include product types/categories, EXCLUDE "gifts", EXCLUDE RECIPIENT'S ALLERGIES
       - Remove conversational filler and location
       - Keep keywords relevant (no over-expansion)
     

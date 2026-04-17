@@ -1,20 +1,4 @@
 {
-    "1": {
-        "wife": {
-            "preferences": [
-                "teddy bears"
-            ],
-            "allergies": [
-                "nuts"
-            ]
-        },
-        "son": {
-            "preferences": [],
-            "allergies": [
-                "mango"
-            ]
-        }
-    },
     "2": {
         "wife": {
             "preferences": [
@@ -23,6 +7,22 @@
             "allergies": [
                 "nuts"
             ]
+        }
+    },
+    "1": {
+        "girlfriend": {
+            "preferences": [
+                "flowers"
+            ],
+            "allergies": [
+                "nuts"
+            ]
+        },
+        "mom": {
+            "preferences": [
+                "cakes"
+            ],
+            "allergies": []
         }
     }
 }
