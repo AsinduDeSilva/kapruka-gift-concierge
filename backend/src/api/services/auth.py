@@ -1,4 +1,4 @@
-import os
+import secrets
 from datetime import datetime, timedelta
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from jose import jwt
 import bcrypt
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "generate_a_strong_secret_key_in_production")
+SECRET_KEY = secrets.token_hex(32)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
