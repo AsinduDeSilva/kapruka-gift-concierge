@@ -1,4 +1,4 @@
-# 📐 Architecture & Diagrams — Kapruka Gift Concierge
+# Architecture & Diagrams — Kapruka Gift Concierge
 
 This document contains comprehensive architectural diagrams for the Kapruka Gift Concierge system. For a high-level overview, see the [main README](./README.md).
 
@@ -95,10 +95,10 @@ The core `AgentOrchestrator.chat()` method implements a **route → parallel exe
 
 ```mermaid
 flowchart TD
-    START(["🧑 User Query Arrives"]) --> ROUTE
+    START(["User Query Arrives"]) --> ROUTE
 
     subgraph "Phase 1: Routing"
-        ROUTE["🧭 Router.route()<br/>LLM classifies intent via<br/>structured output → RouterDecision"]
+        ROUTE["Router.route()<br/>LLM classifies intent via<br/>structured output → RouterDecision"]
     end
 
     ROUTE --> DECISION{{"RouterDecision<br/>Flags"}}
@@ -107,16 +107,16 @@ flowchart TD
     DECISION -->|"direct_chat = false"| TOOL_PATH
 
     subgraph "Path A: Direct Chat"
-        DC_PATH["💬 DirectChatTool.chat()<br/>Small talk handler with<br/>chat history context"]
+        DC_PATH["DirectChatTool.chat()<br/>Small talk handler with<br/>chat history context"]
         DC_PATH --> DC_RETURN["Return response directly<br/>(no reflection needed)"]
     end
 
     subgraph "Path B: Tool Execution (ThreadPoolExecutor)"
         TOOL_PATH --> PARALLEL{{"Parallel Dispatch<br/>(concurrent.futures)"}}
         
-        PARALLEL -->|"update_profile = true"| PREF["👤 PreferenceUpdateTool<br/>Extract & merge recipient<br/>profile into semantic memory"]
-        PARALLEL -->|"search_catalog = true"| CAT["🔍 CatalogSearchTool<br/>Hybrid search (dense + sparse)<br/>via Qdrant RRF fusion"]
-        PARALLEL -->|"check_logistics = true"| LOG["🚚 LogisticsTool<br/>LLM evaluates delivery<br/>feasibility to target district"]
+        PARALLEL -->|"update_profile = true"| PREF["PreferenceUpdateTool<br/>Extract & merge recipient<br/>profile into semantic memory"]
+        PARALLEL -->|"search_catalog = true"| CAT["CatalogSearchTool<br/>Hybrid search (dense + sparse)<br/>via Qdrant RRF fusion"]
+        PARALLEL -->|"check_logistics = true"| LOG["LogisticsTool<br/>LLM evaluates delivery<br/>feasibility to target district"]
     end
 
     PREF --> COLLECT["Collect Results"]
@@ -126,18 +126,18 @@ flowchart TD
     COLLECT --> REFLECT_LOOP
 
     subgraph "Phase 3: Reflection Loop"
-        REFLECT_LOOP["🔄 ReflectionAgent.run()<br/>max_iterations = 3"]
-        REFLECT_LOOP --> DRAFT["📝 Draft Chain<br/>Synthesize tool results +<br/>profile + history → recommendation"]
-        DRAFT --> CRITIQUE["🛡️ Reflection Chain<br/>Check draft against allergies<br/>& restrictions → ReflectionCritique"]
+        REFLECT_LOOP["ReflectionAgent.run()<br/>max_iterations = 3"]
+        REFLECT_LOOP --> DRAFT["Draft Chain<br/>Synthesize tool results +<br/>profile + history → recommendation"]
+        DRAFT --> CRITIQUE["Reflection Chain<br/>Check draft against allergies<br/>& restrictions → ReflectionCritique"]
         CRITIQUE --> SAFE{{"is_safe?"}}
-        SAFE -->|"✅ Yes"| FINAL["Return Final Draft"]
-        SAFE -->|"❌ No (violations found)"| REVISE["✏️ Revision Chain<br/>Fix violations while keeping<br/>warm, personalized tone"]
+        SAFE -->|"Yes"| FINAL["Return Final Draft"]
+        SAFE -->|"No (violations found)"| REVISE["Revision Chain<br/>Fix violations while keeping<br/>warm, personalized tone"]
         REVISE --> CRITIQUE
     end
 
-    DC_RETURN --> MEMORY["💾 Save to Short-Term Memory"]
+    DC_RETURN --> MEMORY["Save to Short-Term Memory"]
     FINAL --> MEMORY
-    MEMORY --> END(["📤 Response Sent to User"])
+    MEMORY --> END(["Response Sent to User"])
 ```
 
 ### Key Design Decisions
@@ -192,16 +192,16 @@ flowchart TD
     FETCH_PROFILE --> DRAFT_CHAIN
 
     subgraph "Iteration Loop - max 3 iterations"
-        DRAFT_CHAIN["📝 Draft Chain<br/><b>draft_system_prompt</b><br/>Synthesize catalog results,<br/>logistics data, profile, history<br/>into warm recommendation"]
+        DRAFT_CHAIN["Draft Chain<br/><b>draft_system_prompt</b><br/>Synthesize catalog results,<br/>logistics data, profile, history<br/>into warm recommendation"]
         
-        DRAFT_CHAIN --> REFLECT_CHAIN["🔍 Reflection Chain<br/><b>reflection_system_prompt</b><br/>Review draft against<br/>recipient allergies/restrictions<br/>→ ReflectionCritique"]
+        DRAFT_CHAIN --> REFLECT_CHAIN["Reflection Chain<br/><b>reflection_system_prompt</b><br/>Review draft against<br/>recipient allergies/restrictions<br/>→ ReflectionCritique"]
         
         REFLECT_CHAIN --> CHECK{{"is_safe?"}}
         
-        CHECK -->|"✅ true"| RETURN["Return current draft"]
-        CHECK -->|"❌ false<br/>violations detected"| LOG_WARN["⚠️ Log violations"]
+        CHECK -->|"true"| RETURN["Return current draft"]
+        CHECK -->|"false<br/>violations detected"| LOG_WARN["Log violations"]
         
-        LOG_WARN --> REVISE_CHAIN["✏️ Revision Chain<br/><b>revision_system_prompt</b><br/>Fix violations while<br/>maintaining tone<br/>(no mention of revision)"]
+        LOG_WARN --> REVISE_CHAIN["Revision Chain<br/><b>revision_system_prompt</b><br/>Fix violations while<br/>maintaining tone<br/>(no mention of revision)"]
         
         REVISE_CHAIN -->|"Loop back"| REFLECT_CHAIN
     end
@@ -272,14 +272,14 @@ flowchart LR
     subgraph "R — Retrieval (CatalogSearchTool)"
         Q["Router-optimized queries"] --> D["Dense Search<br/>(Semantic Embeddings)"]
         Q --> S["Sparse Search<br/>(BM25 Keywords)"]
-        D --> RRF["🔀 RRF Fusion"]
+        D --> RRF["RRF Fusion"]
         S --> RRF
         RRF --> PRODUCTS["Top-K Products<br/>(title, price, description, url)"]
     end
 
     subgraph "A+G — Augmentation & Generation (Draft Chain)"
         PRODUCTS --> CONTEXT["Augmented Context:<br/>• Retrieved products<br/>• Recipient profile<br/>• Chat history<br/>• Logistics results"]
-        CONTEXT --> LLM["🤖 LLM (GPT-4o-mini)<br/>Generates personalized<br/>gift recommendation"]
+        CONTEXT --> LLM["LLM (GPT-4o-mini)<br/>Generates personalized<br/>gift recommendation"]
         LLM --> OUTPUT["Natural language<br/>recommendation with<br/>product links"]
     end
 ```
@@ -308,7 +308,7 @@ flowchart TD
     DENSE_EMB --> PREFETCH_D["Prefetch: Dense Search<br/>Top 20 by cosine similarity"]
     SPARSE_EMB --> PREFETCH_S["Prefetch: Sparse Search<br/>Top 20 by BM25 score"]
 
-    PREFETCH_D --> RRF["🔀 Reciprocal Rank Fusion<br/>RRF Merge"]
+    PREFETCH_D --> RRF["Reciprocal Rank Fusion<br/>RRF Merge"]
     PREFETCH_S --> RRF
 
     RRF --> TOP_K["Return Top 5 Products"]
@@ -478,31 +478,31 @@ The complete journey of a single user message through every layer of the system.
 
 ```mermaid
 flowchart TD
-    A["🧑 User types message in chat UI"] --> B["Frontend sends POST /chat<br/>with JWT + session_id"]
+    A["User types message in chat UI"] --> B["Frontend sends POST /chat<br/>with JWT + session_id"]
     B --> C["FastAPI validates JWT,<br/>loads session from SQLite"]
     C --> D["Load message history<br/>into ShortTermMemoryManager"]
     D --> E["Start background thread<br/>with AgentOrchestrator.chat()"]
-    E --> F["🧭 Router classifies intent<br/>(LLM structured output)"]
+    E --> F["Router classifies intent<br/>(LLM structured output)"]
     F --> G{{"Route Decision"}}
     
-    G -->|"Small Talk"| H["💬 DirectChatTool<br/>(LLM chat with history)"]
-    G -->|"Gift Query"| I["⚡ Parallel Execution"]
+    G -->|"Small Talk"| H["DirectChatTool<br/>(LLM chat with history)"]
+    G -->|"Gift Query"| I["Parallel Execution"]
     
-    I --> I1["👤 PreferenceUpdate<br/>(if new prefs)"]
-    I --> I2["🔍 CatalogSearch<br/>(hybrid Qdrant)"]
-    I --> I3["🚚 LogisticsCheck<br/>(if location mentioned)"]
+    I --> I1["PreferenceUpdate<br/>(if new prefs)"]
+    I --> I2["CatalogSearch<br/>(hybrid Qdrant)"]
+    I --> I3["LogisticsCheck<br/>(if location mentioned)"]
     
     I1 --> J["Collect results"]
     I2 --> J
     I3 --> J
     
-    J --> K["🔄 ReflectionAgent loops:<br/>Draft → Critique → Revise"]
+    J --> K["ReflectionAgent loops:<br/>Draft → Critique → Revise"]
     
-    H --> L["💾 Save to memory + DB"]
+    H --> L["Save to memory + DB"]
     K --> L
     
-    L --> M["📤 Stream final response<br/>via SSE to frontend"]
-    M --> N["🖥️ UI renders markdown<br/>response with product links"]
+    L --> M["Stream final response<br/>via SSE to frontend"]
+    M --> N["UI renders markdown<br/>response with product links"]
 ```
 
 ---

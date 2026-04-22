@@ -4,7 +4,7 @@ The backend is a **FastAPI** application that powers the Kapruka Gift Concierge 
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ```
 backend/
@@ -70,7 +70,7 @@ backend/
 
 ---
 
-## 🌐 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
@@ -82,7 +82,7 @@ backend/
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### `config/param.yaml`
 ```yaml
@@ -115,7 +115,7 @@ openrouter:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Python 3.12+
@@ -141,7 +141,7 @@ uv run uvicorn src.api.main:app --reload
 
 ---
 
-## 📦 Key Dependencies
+## Key Dependencies
 
 | Package | Purpose |
 |---|---|
