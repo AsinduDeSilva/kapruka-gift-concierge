@@ -4,18 +4,18 @@ An AI-powered gift recommendation chatbot built for [Kapruka](https://www.kapruk
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **Multi-Agent Orchestration** — An intent router dispatches user queries to specialized tools (catalog search, logistics, profile update, direct chat) in parallel.
 - **Reflection-Based Safety Loop** — A critique-and-revise loop (up to 3 iterations) validates recommendations against recipient allergies and restrictions before delivery.
 - **Hybrid Search (RRF)** — Combines dense semantic search (OpenAI embeddings) with sparse keyword search (BM25) via Reciprocal Rank Fusion in Qdrant for superior product retrieval.
 - **Dual Memory Architecture** — Persistent semantic memory (recipient profiles with preferences/allergies) + in-session short-term memory for conversational context.
-- **Real-Time Streaming** — Server-Sent Events (SSE) stream live status updates ("Searching catalog...", "Checking logistics...") to the frontend during agent processing.
+- **Real-Time Streaming** — Server-Sent Events (SSE) stream live status updates to the frontend during agent processing.
 - **Automated Data Pipeline** — Playwright-based web crawler scrapes Kapruka.com product catalogs, which are then embedded and indexed into Qdrant.
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```
 kapruka-gift-concierge/
@@ -41,27 +41,27 @@ kapruka-gift-concierge/
 
 ---
 
-## 🔄 Multi-Agent Orchestration Flow
+## Multi-Agent Orchestration Flow
 
 ```mermaid
 flowchart TD
-    A["🧑 User Query"] --> B["🧭 Router<br/>(LLM Intent Classification)"]
+    A["User Query"] --> B["Router<br/>(LLM Intent Classification)"]
     B --> C{Route Decision}
     
-    C -->|"Small Talk"| D["💬 DirectChatTool"]
-    C -->|"Gift Query"| E["⚡ Parallel Execution"]
+    C -->|"Small Talk"| D["DirectChatTool"]
+    C -->|"Gift Query"| E["Parallel Execution"]
     
-    E --> E1["👤 PreferenceUpdate<br/>(if new prefs detected)"]
-    E --> E2["🔍 CatalogSearch<br/>(Hybrid Qdrant Search)"]
-    E --> E3["🚚 LogisticsCheck<br/>(if location mentioned)"]
+    E --> E1["PreferenceUpdate<br/>(if new prefs detected)"]
+    E --> E2["CatalogSearch<br/>(Hybrid Qdrant Search)"]
+    E --> E3["LogisticsCheck<br/>(if location mentioned)"]
     
     E1 --> F["Collect Results"]
     E2 --> F
     E3 --> F
     
-    F --> G["🔄 Reflection Loop<br/>(Draft → Critique → Revise)"]
+    F --> G["Reflection Loop<br/>(Draft → Critique → Revise)"]
     
-    D --> H["📤 Response"]
+    D --> H["Response"]
     G --> H
 ```
 
@@ -74,14 +74,14 @@ flowchart TD
 
 ---
 
-## 🔒 Reflection Safety Loop
+## Reflection Safety Loop
 
 ```mermaid
 flowchart LR
-    A["📝 Draft<br/>Recommendation"] --> B["🛡️ Critique<br/>(Allergy Check)"]
+    A["Draft<br/>Recommendation"] --> B["Critique<br/>(Allergy Check)"]
     B --> C{Safe?}
-    C -->|"✅ Yes"| D["📤 Send to User"]
-    C -->|"❌ Violations"| E["✏️ Revise Draft"]
+    C -->|"Yes"| D["Send to User"]
+    C -->|"Violations"| E["Revise Draft"]
     E --> B
 ```
 
@@ -89,7 +89,7 @@ The reflection loop ensures that no recommendation violates the recipient's know
 
 ---
 
-## 📚 Hybrid RAG Pipeline
+## Hybrid RAG Pipeline
 
 The system implements a **Hybrid Retrieval-Augmented Generation (RAG)** pipeline, where the retrieval and generation phases are distributed across two separate agent components:
 
@@ -98,14 +98,14 @@ flowchart LR
     subgraph "R — Retrieval (CatalogSearchTool)"
         Q["Router-optimized queries"] --> D["Dense Search<br/>(Semantic Embeddings)"]
         Q --> S["Sparse Search<br/>(BM25 Keywords)"]
-        D --> RRF["🔀 RRF Fusion"]
+        D --> RRF["RRF Fusion"]
         S --> RRF
         RRF --> PRODUCTS["Top-K Products<br/>(title, price, description, url)"]
     end
 
     subgraph "A+G — Augmentation & Generation (Draft Chain)"
         PRODUCTS --> CONTEXT["Augmented Context:<br/>• Retrieved products<br/>• Recipient profile<br/>• Chat history<br/>• Logistics results"]
-        CONTEXT --> LLM["🤖 LLM (GPT-4o-mini)<br/>Generates personalized<br/>gift recommendation"]
+        CONTEXT --> LLM["LLM (GPT-4o-mini)<br/>Generates personalized<br/>gift recommendation"]
         LLM --> OUTPUT["Natural language<br/>recommendation with<br/>product links"]
     end
 ```
@@ -118,35 +118,35 @@ flowchart LR
 
 ---
 
-## 🔁 Full Request Lifecycle (End-to-End)
+## Full Request Lifecycle (End-to-End)
 
 ```mermaid
 flowchart TD
-    A["🧑 User types message in chat UI"] --> B["Frontend sends POST /chat<br/>with JWT + session_id"]
+    A["User types message in chat UI"] --> B["Frontend sends POST /chat<br/>with JWT + session_id"]
     B --> C["FastAPI validates JWT,<br/>loads session from SQLite"]
     C --> D["Load message history<br/>into ShortTermMemoryManager"]
     D --> E["Start background thread<br/>with AgentOrchestrator.chat()"]
-    E --> F["🧭 Router classifies intent<br/>(LLM structured output)"]
+    E --> F["Router classifies intent"]
     F --> G{{"Route Decision"}}
     
-    G -->|"Small Talk"| H["💬 DirectChatTool<br/>(LLM chat with history)"]
-    G -->|"Gift Query"| I["⚡ Parallel Execution"]
+    G -->|"Small Talk"| H["DirectChatTool<br/>(LLM chat with history)"]
+    G -->|"Gift Query"| I["Parallel Execution"]
     
-    I --> I1["👤 PreferenceUpdate<br/>(if new prefs)"]
-    I --> I2["🔍 CatalogSearch<br/>(hybrid Qdrant)"]
-    I --> I3["🚚 LogisticsCheck<br/>(if location mentioned)"]
+    I --> I1["PreferenceUpdate<br/>(if new prefs)"]
+    I --> I2["CatalogSearch<br/>(hybrid Qdrant)"]
+    I --> I3["LogisticsCheck<br/>(if location mentioned)"]
     
     I1 --> J["Collect results"]
     I2 --> J
     I3 --> J
     
-    J --> K["🔄 ReflectionAgent loops:<br/>Draft → Critique → Revise"]
+    J --> K["ReflectionAgent loops:<br/>Draft → Critique → Revise"]
     
-    H --> L["💾 Save to memory + DB"]
+    H --> L["Save to memory + DB"]
     K --> L
     
-    L --> M["📤 Stream final response<br/>via SSE to frontend"]
-    M --> N["🖥️ UI renders markdown<br/>response with product links"]
+    L --> M["Stream final response<br/>via SSE to frontend"]
+    M --> N["UI renders markdown<br/>response with product links"]
 ```
 
 **Step-by-step:**
@@ -154,7 +154,7 @@ flowchart TD
 1. **User Input** — The user types a message in the Next.js chat UI.
 2. **API Request** — The frontend sends a `POST /chat` request with a JWT token and session ID via `fetch` (for SSE streaming).
 3. **Auth & Session** — FastAPI validates the JWT, loads the chat session from SQLite, and rebuilds the conversation history into a `ShortTermMemoryManager`.
-4. **Background Processing** — A background thread starts the `AgentOrchestrator.chat()` method. Status callbacks push updates to a `queue.Queue`, which the main thread streams as SSE events.
+4. **Background Processing** — A background thread starts the `AgentOrchestrator.chat()` method. Status callbacks push updates to a `Queue`, which the main thread streams as SSE events.
 5. **Routing** — The Router (LLM with structured output) classifies intent into a `RouterDecision` — setting flags like `search_catalog`, `check_logistics`, `update_profile`, or `direct_chat`.
 6. **Tool Execution** — Flagged tools run in parallel. Catalog search uses hybrid retrieval (dense + sparse → RRF fusion). Logistics uses LLM reasoning about distance/perishability. Profile updates merge new preferences into semantic memory.
 7. **Reflection** — The ReflectionAgent drafts a recommendation, critiques it against the recipient's allergies, and revises if needed (up to 3 iterations).
@@ -162,7 +162,7 @@ flowchart TD
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Layer | Technology |
 |---|---|
@@ -178,7 +178,7 @@ flowchart TD
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -228,7 +228,7 @@ Navigate to `http://localhost:3000`, sign up, and start chatting with the Gift C
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 | Directory | Description |
 |---|---|
@@ -237,11 +237,11 @@ Navigate to `http://localhost:3000`, sign up, and start chatting with the Gift C
 
 See the individual README files in each directory for detailed documentation.
 
-📐 **For comprehensive architectural diagrams** (class diagrams, sequence diagrams, data flow, memory architecture, and more), see **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
+**For comprehensive architectural diagrams** (class diagrams, memory architecture, and more), see **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 The backend uses YAML-based configuration for flexible LLM and embedding model selection:
 

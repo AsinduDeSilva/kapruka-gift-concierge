@@ -4,7 +4,7 @@ A modern **Next.js** chat interface for the Kapruka Gift Concierge AI agent. Fea
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 frontend/
@@ -55,7 +55,7 @@ frontend/
 
 ---
 
-## ✨ Features
+## Features
 
 ### Chat Interface
 - **Real-time SSE streaming** — Status updates appear live while the agent processes ("Analyzing request...", "Searching catalog...", "Synthesizing response...")
@@ -75,7 +75,7 @@ frontend/
 
 ---
 
-## 🔌 API Integration
+## API Integration
 
 The `services/api.js` module handles all backend communication:
 
@@ -92,7 +92,7 @@ The function uses the native `fetch` API (not axios) to read the SSE stream via 
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js 20.9+
@@ -115,7 +115,7 @@ npm run dev
 
 ---
 
-## 🔧 Environment Variables
+## Environment Variables
 
 | Variable | Description | Example |
 |---|---|---|
