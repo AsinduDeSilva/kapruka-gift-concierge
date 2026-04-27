@@ -2,7 +2,7 @@
 name = "kapruka-gift-concierge"
 version = "0.1.0"
 description = "Backend with Multi-agent system for Kapruka Gift Concierge"
-requires-python = ">=3.12"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "playwright",
     "loguru",
@@ -24,7 +24,8 @@ dependencies = [
     "email-validator",
     "tzdata",
     "jupyterlab",
-    "ipykernel"
+    "ipykernel",
+    "psycopg2-binary"
 ]
 
 [build-system]
