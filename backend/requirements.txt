@@ -15,9 +15,11 @@ fastembed
 
 fastapi
 uvicorn
-sqlalchemy
 passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
 email-validator
 tzdata
+
+sqlalchemy
+psycopg2-binary
