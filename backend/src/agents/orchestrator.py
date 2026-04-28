@@ -1,4 +1,5 @@
 import concurrent.futures
+import contextvars
 
 from loguru import logger
 from typing import Callable
@@ -9,6 +10,7 @@ from src.agents.tools.catalog_search_tool import CatalogSearchTool
 from src.agents.tools.direct_chat_tool import DirectChatTool
 from src.agents.tools.logistics_tool import LogisticsTool
 from src.agents.tools.preference_update_tool import PreferenceUpdateTool
+from src.infrastructure.observability import observe
 from src.infrastructure.llm.llm_provider import get_chat_llm
 from src.memory.semantic_memory_manager import SemanticMemoryManager
 from src.memory.short_term_memory_manager import ShortTermMemoryManager
@@ -35,6 +37,7 @@ class AgentOrchestrator:
         self.direct_chat_tool = direct_chat_tool
         self.reflection_agent = reflection_agent
 
+    @observe(name="orchestrator")
     def chat(self, user_id: str, user_query: str, st_memory: ShortTermMemoryManager, status_callback: Callable = None) -> str:
 
         def _status(msg: str):
@@ -58,26 +61,30 @@ class AgentOrchestrator:
             # Profile Update
             if decision.update_profile:
                 _status("Analyzing and updating user profile preferences...")
-                concurrent_tasks[executor.submit(self.preference_tool.update_semantic_memory, user_id,
-                                               user_query)] = "preference_update"
+                concurrent_tasks[executor.submit(
+                    contextvars.copy_context().run, self.preference_tool.update_semantic_memory, user_id, user_query
+                )] = "preference_update"
 
             # Direct Chat
             if decision.direct_chat:
                 _status("Preparing direct response...")
-                concurrent_tasks[executor.submit(self.direct_chat_tool.chat, user_query, st_memory)] = "direct_chat"
+                concurrent_tasks[executor.submit(
+                    contextvars.copy_context().run, self.direct_chat_tool.chat, user_query, st_memory
+                )] = "direct_chat"
             else:
                 # Catalog Search
                 if decision.search_catalog:
                     _status("Searching Kapruka catalog for best matches...")
-                    concurrent_tasks[executor.submit(self.catalog_tool.search, decision.vector_query,
-                                                   decision.keyword_query)] = "catalog_search"
+                    concurrent_tasks[executor.submit(
+                        contextvars.copy_context().run, self.catalog_tool.search, decision.vector_query, decision.keyword_query
+                    )] = "catalog_search"
 
                 # Check Logistics Feasibility
                 if decision.check_logistics:
                     _status("Checking logistics and delivery feasibility...")
-                    concurrent_tasks[
-                        executor.submit(self.logistics_tool.check_delivery_feasibility, decision.target_location,
-                                        decision.vector_query)] = "logistics_check"
+                    concurrent_tasks[executor.submit(
+                        contextvars.copy_context().run, self.logistics_tool.check_delivery_feasibility, decision.target_location, decision.vector_query
+                    )] = "logistics_check"
 
             for future in concurrent.futures.as_completed(concurrent_tasks):
                 task_name = concurrent_tasks[future]

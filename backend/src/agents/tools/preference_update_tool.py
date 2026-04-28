@@ -4,6 +4,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
 from src.agents.prompts.agent_prompts import preference_update_system_prompt, preference_update_user_prompt
+from src.infrastructure.observability import observe, get_langfuse_callbacks
 
 
 class PreferenceUpdateTool:
@@ -11,6 +12,7 @@ class PreferenceUpdateTool:
         self.llm = llm
         self.semantic_memory = semantic_memory
 
+    @observe(name="preference_update")
     def update_semantic_memory(self, user_id, user_message):
         current_profile = self.semantic_memory.get_profile(user_id)
 
@@ -24,7 +26,7 @@ class PreferenceUpdateTool:
         updated_profile = chain.invoke({
             "current_profile": json.dumps(current_profile, indent=2),
             "user_message": user_message
-        })
+        }, config={"callbacks": get_langfuse_callbacks()})
 
         self.semantic_memory.save_profile(user_id, updated_profile)
 

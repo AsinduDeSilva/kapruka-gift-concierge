@@ -2,6 +2,7 @@ import json
 
 from langchain_core.prompts import ChatPromptTemplate
 
+from src.infrastructure.observability import observe, get_langfuse_callbacks
 from src.agents.prompts.agent_prompts import router_user_prompt, router_system_prompt
 from src.agents.schemas import RouterDecision
 from src.memory.short_term_memory_manager import ShortTermMemoryManager
@@ -12,6 +13,7 @@ class Router:
         self.llm = llm
         self.semantic_memory = semantic_memory
 
+    @observe(name="router")
     def route(self, user_query: str, st_memory: ShortTermMemoryManager, user_id: str) -> RouterDecision:
         current_profile = self.semantic_memory.get_profile(user_id)
 
@@ -26,5 +28,5 @@ class Router:
             "current_profile": json.dumps(current_profile, indent=2),
             "st_memory": st_memory.get_history(),
             "user_query": user_query
-        })
+        }, config={"callbacks": get_langfuse_callbacks()})
 

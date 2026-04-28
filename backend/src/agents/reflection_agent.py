@@ -12,6 +12,7 @@ from src.agents.prompts.agent_prompts import (
     revision_user_prompt
 )
 from src.agents.schemas import ReflectionCritique
+from src.infrastructure.observability import observe, get_langfuse_callbacks
 from src.memory.semantic_memory_manager import SemanticMemoryManager
 from src.memory.short_term_memory_manager import ShortTermMemoryManager
 
@@ -36,6 +37,7 @@ class ReflectionAgent:
             ("user", revision_user_prompt)
         ])
 
+    @observe(name="reflection_agent")
     def run(
         self,
         user_query: str,
@@ -55,7 +57,7 @@ class ReflectionAgent:
             "tool_results": json.dumps(tool_results, indent=2),
             "profile": user_profile,
             "memory": st_memory.get_history(),
-        })
+        }, config={"callbacks": get_langfuse_callbacks()})
 
         for i in range(max_iterations):
             logger.info(f"Reflection iteration {i + 1} for draft...")
@@ -63,7 +65,7 @@ class ReflectionAgent:
             critique = reflect_chain.invoke({
                 "proposed_gifts": current_draft,
                 "profile": user_profile
-            })
+            }, config={"callbacks": get_langfuse_callbacks()})
             
             if critique.is_safe:
                 logger.info("Draft is safe. Exiting reflection loop.")
@@ -76,6 +78,6 @@ class ReflectionAgent:
             current_draft = revise_chain.invoke({
                 "draft": current_draft,
                 "critique": critique.violations
-            })
+            }, config={"callbacks": get_langfuse_callbacks()})
             
         return current_draft
