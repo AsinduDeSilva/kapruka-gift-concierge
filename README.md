@@ -11,6 +11,7 @@ An AI-powered gift recommendation chatbot built for [Kapruka](https://www.kapruk
 - **Hybrid Search (RRF)** — Combines dense semantic search (OpenAI embeddings) with sparse keyword search (BM25) via Reciprocal Rank Fusion in Qdrant for superior product retrieval.
 - **Dual Memory Architecture** — Persistent semantic memory (recipient profiles with preferences/allergies) + in-session short-term memory for conversational context.
 - **Real-Time Streaming** — Server-Sent Events (SSE) stream live status updates to the frontend during agent processing.
+- **Langfuse Observability** — End-to-end tracing of agent orchestration, LLM calls (model, tokens, cost), and tool execution.
 - **Automated Data Pipeline** — Playwright-based web crawler scrapes Kapruka.com product catalogs, which are then embedded and indexed into Qdrant.
 
 ---
@@ -123,7 +124,7 @@ flowchart LR
 ```mermaid
 flowchart TD
     A["User types message in chat UI"] --> B["Frontend sends POST /chat<br/>with JWT + session_id"]
-    B --> C["FastAPI validates JWT,<br/>loads session from SQLite"]
+    B --> C["FastAPI validates JWT,<br/>loads session from PostgreSQL"]
     C --> D["Load message history<br/>into ShortTermMemoryManager"]
     D --> E["Start background thread<br/>with AgentOrchestrator.chat()"]
     E --> F["Router classifies intent"]
@@ -153,12 +154,12 @@ flowchart TD
 
 1. **User Input** — The user types a message in the Next.js chat UI.
 2. **API Request** — The frontend sends a `POST /chat` request with a JWT token and session ID via `fetch` (for SSE streaming).
-3. **Auth & Session** — FastAPI validates the JWT, loads the chat session from SQLite, and rebuilds the conversation history into a `ShortTermMemoryManager`.
+3. **Auth & Session** — FastAPI validates the JWT, loads the chat session from PostgreSQL, and rebuilds the conversation history into a `ShortTermMemoryManager`.
 4. **Background Processing** — A background thread starts the `AgentOrchestrator.chat()` method. Status callbacks push updates to a `Queue`, which the main thread streams as SSE events.
 5. **Routing** — The Router (LLM with structured output) classifies intent into a `RouterDecision` — setting flags like `search_catalog`, `check_logistics`, `update_profile`, or `direct_chat`.
 6. **Tool Execution** — Flagged tools run in parallel. Catalog search uses hybrid retrieval (dense + sparse → RRF fusion). Logistics uses LLM reasoning about distance/perishability. Profile updates merge new preferences into semantic memory.
 7. **Reflection** — The ReflectionAgent drafts a recommendation, critiques it against the recipient's allergies, and revises if needed (up to 3 iterations).
-8. **Response** — The final response is streamed to the frontend, saved to both short-term memory and SQLite, and rendered as markdown in the chat UI.
+8. **Response** — The final response is streamed to the frontend, saved to both short-term memory and PostgreSQL, and rendered as markdown in the chat UI.
 
 ---
 
@@ -172,7 +173,8 @@ flowchart TD
 | **LLM** | OpenAI GPT-4o-mini (via OpenRouter) |
 | **Embeddings** | Dense: OpenAI `text-embedding-3-small` (1536-dim), Sparse: FastEmbed BM25 |
 | **Vector Database** | Qdrant (local persistent storage) |
-| **Relational DB** | SQLite (users, sessions, messages) |
+| **Relational DB** | PostgreSQL (users, sessions, messages) |
+| **Observability** | Langfuse (LLM tracing, token/cost tracking, prompt management) |
 | **Data Pipeline** | Playwright (web scraping), custom ingestion pipeline |
 | **Streaming** | Server-Sent Events (SSE) |
 
@@ -197,7 +199,7 @@ uv sync
 
 # Configure environment
 cp .env.sample .env
-# Edit .env and add your OPENROUTER_API_KEY
+# Edit .env and add your API keys
 
 # Run data ingestion (first time only)
 uv run python -m src.services.ingest_service.pipeline
@@ -247,7 +249,7 @@ The backend uses YAML-based configuration for flexible LLM and embedding model s
 
 - **`config/param.yaml`** — LLM provider, tier, temperature, max tokens, Qdrant collection name
 - **`config/models.yaml`** — Model registry with tiers (general, strong, reason) for OpenRouter and OpenAI
-- **`.env`** — API keys (`OPENROUTER_API_KEY`)
+- **`.env`** — API keys and service configuration
 
 Switching LLM providers or models requires only a config change — no code modifications.
 

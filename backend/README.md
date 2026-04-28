@@ -15,8 +15,7 @@ backend/
 ├── data/
 │   ├── catalog/             # Scraped product catalog (catalog.json)
 │   ├── qdrant_data/         # Qdrant persistent vector storage
-│   ├── semantic_memory/     # User profiles (profiles.json)
-│   └── user_data/           # SQLite database (storage.db)
+│   └── semantic_memory/     # User profiles (profiles.json)
 │
 ├── notebooks/               # Jupyter notebooks for prototyping & testing
 │
@@ -54,6 +53,7 @@ backend/
     │
     ├── infrastructure/      # Infrastructure
     │   ├── config.py        
+    │   ├── observability.py  # Langfuse tracing wrappers
     │   └── llm/
     │       ├── llm_provider.py  
     │       └── embeddings.py    
@@ -88,14 +88,14 @@ backend/
 ```yaml
 llm:
   provider: openrouter       # or "openai"
-  tier: general               # general, strong, or reason
+  tier: general              # general, strong, or reason
   temperature: 0.0
   max_tokens: 3000
   streaming: false
 
 embedding:
   provider: openrouter
-  tier: default               # default or large
+  tier: default              # default or large
 
 qdrant:
   collection_name: kapruka_catalog
@@ -137,20 +137,34 @@ uv run python -m src.services.ingest_service.pipeline
 # Start the server
 uv run uvicorn src.api.main:app --reload
 ```
+---
 
+### Langfuse Observability
+
+To enable LLM tracing and observability, add the following to your `.env`:
+
+```env
+LANGFUSE_SECRET_KEY=
+LANGFUSE_PUBLIC_KEY=
+LANGFUSE_BASE_URL=
+```
+
+When these variables are set, Langfuse automatically captures full traces of every agent call — including LLM model, token usage, cost, prompts, and completions. When unset, all tracing is disabled with zero overhead.
 
 ---
 
 ## Key Dependencies
 
-| Package | Purpose |
-|---|---|
-| `fastapi` | Web framework |
+| Package | Purpose                                         |
+|---|-------------------------------------------------|
+| `fastapi` | Web framework                                   |
 | `langchain`, `langchain-openai` | LLM chains, structured output, prompt templates |
-| `qdrant-client` | Vector database client |
-| `fastembed` | BM25 sparse embedding model |
-| `sqlalchemy` | ORM for SQLite |
-| `python-jose` | JWT token handling |
-| `bcrypt` | Password hashing |
-| `playwright` | Web scraping for Kapruka.com |
-| `loguru` | Structured logging |
+| `qdrant-client` | Vector database client                          |
+| `fastembed` | BM25 sparse embedding model                     |
+| `sqlalchemy` | ORM for PostgreSQL                              |
+| `psycopg2-binary` | PostgreSQL database driver                      |
+| `langfuse` | Trace agents, LLM calls                         |
+| `python-jose` | JWT token handling                              |
+| `bcrypt` | Password hashing                                |
+| `playwright` | Web scraping for Kapruka.com                    |
+| `loguru` | Structured logging                              |
