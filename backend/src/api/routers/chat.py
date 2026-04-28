@@ -3,6 +3,7 @@ import threading
 import json
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+from langfuse import propagate_attributes
 from sqlalchemy.orm import Session
 
 from src.api.db.core import get_db
@@ -14,7 +15,6 @@ from src.memory.semantic_memory_manager import SemanticMemoryManager
 from src.memory.short_term_memory_manager import ShortTermMemoryManager
 
 router = APIRouter(prefix="/chat", tags=["chat"])
-
 
 @router.get("/session", response_model=SessionResponse)
 def create_session(
@@ -66,12 +66,17 @@ def chat_endpoint(
 
     def background_task():
         try:
-            reply_text = agent_orchestrator.chat(
-                user_id=str(user.id),
-                user_query=request.user_query,
-                st_memory=st_memory,
-                status_callback=status_callback
-            )
+            with propagate_attributes(
+                    trace_name="chat_endpoint",
+                    session_id=request.session_id,
+                    user_id=str(user.id)
+            ):
+                reply_text = agent_orchestrator.chat(
+                    user_id=str(user.id),
+                    user_query=request.user_query,
+                    st_memory=st_memory,
+                    status_callback=status_callback
+                )
             updated_profile = agent_orchestrator.semantic_memory.get_profile(str(user.id))
             q.put({"final": reply_text, "profile": updated_profile})
         except Exception as e:

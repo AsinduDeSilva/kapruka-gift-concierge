@@ -25,7 +25,8 @@ dependencies = [
     "tzdata",
     "jupyterlab",
     "ipykernel",
-    "psycopg2-binary"
+    "psycopg2-binary",
+    "langfuse"
 ]
 
 [build-system]
