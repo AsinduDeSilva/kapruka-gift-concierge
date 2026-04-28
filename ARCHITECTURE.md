@@ -49,12 +49,13 @@ graph TB
         subgraph "Infrastructure"
             LLM["LLM Provider<br/>(ChatOpenAI via OpenRouter)"]
             EMB["Embeddings<br/>(Dense + Sparse)"]
+            OBSERVABILITY["Langfuse<br/>(Tracing & Metrics)"]
             CONFIG["Config Manager<br/>(YAML + .env)"]
         end
 
         subgraph "Data Layer"
             QDRANT["Qdrant Vector DB"]
-            SQLITE["SQLite<br/>(Users, Sessions, Messages)"]
+            POSTGRESQL["PostgreSQL<br/>(Users, Sessions, Messages)"]
             SEM_MEM["Semantic Memory<br/>(profiles.json)"]
             ST_MEM["Short-Term Memory<br/>(in-memory buffer)"]
         end
@@ -81,7 +82,8 @@ graph TB
     REFLECT --> SEM_MEM
     LLM --> LLM_API
     EMB --> LLM_API
-    CHAT_R --> SQLITE
+    ORCH -.->|"Traces"| OBSERVABILITY
+    CHAT_R --> POSTGRESQL
     ORCH --> SEM_MEM
     ORCH --> ST_MEM
     KAPRUKA -.->|"Playwright Crawl"| QDRANT
@@ -236,7 +238,7 @@ flowchart LR
     end
 
     subgraph "Relational DB - Persistent"
-        SQL["SQLite via SQLAlchemy"]
+        SQL["PostgreSQL via SQLAlchemy"]
         USERS["Users Table"]
         SESSIONS["ChatSessions Table"]
         MSGS["Messages Table"]
@@ -256,9 +258,9 @@ flowchart LR
 
 ### Memory Flow Per Request
 
-1. **Load**: Previous messages for the session are loaded from SQLite → `ShortTermMemoryManager`
+1. **Load**: Previous messages for the session are loaded from PostgreSQL → `ShortTermMemoryManager`
 2. **Use**: Router and tools read from both memory types
-3. **Update**: After response, new user/assistant messages are added to both short-term buffer and SQLite
+3. **Update**: After response, new user/assistant messages are added to both short-term buffer and PostgreSQL
 4. **Profile Update**: `PreferenceUpdateTool` may asynchronously update semantic memory (profiles.json)
 
 ---
@@ -479,7 +481,7 @@ The complete journey of a single user message through every layer of the system.
 ```mermaid
 flowchart TD
     A["User types message in chat UI"] --> B["Frontend sends POST /chat<br/>with JWT + session_id"]
-    B --> C["FastAPI validates JWT,<br/>loads session from SQLite"]
+    B --> C["FastAPI validates JWT,<br/>loads session from PostgreSQL"]
     C --> D["Load message history<br/>into ShortTermMemoryManager"]
     D --> E["Start background thread<br/>with AgentOrchestrator.chat()"]
     E --> F["Router classifies intent<br/>(LLM structured output)"]
@@ -525,6 +527,7 @@ graph LR
         SQLA["SQLAlchemy"]
         PYDANTIC["Pydantic"]
         LANGCHAIN["LangChain"]
+        LANGFUSE["Langfuse - Tracing"]
         JOSE["python-jose - JWT"]
         BCRYPT["bcrypt"]
     end
@@ -538,7 +541,7 @@ graph LR
 
     subgraph "Data Pipeline"
         PLAYWRIGHT["Playwright - Crawler"]
-        SQLITE_DB["SQLite - User Data"]
+        POSTGRES["PostgreSQL - User Data"]
         JSON_FILES["JSON - Profiles + Catalog"]
     end
 ```
@@ -549,13 +552,14 @@ graph LR
 | **Styling** | TailwindCSS + shadcn/ui | Utility-first CSS with accessible components |
 | **HTTP Client** | Axios + Fetch API | REST calls + SSE streaming |
 | **Backend API** | FastAPI | Async Python web framework |
-| **ORM** | SQLAlchemy | Database abstraction for SQLite |
+| **ORM** | SQLAlchemy | Database abstraction for PostgreSQL |
 | **Validation** | Pydantic | Request/response schema validation |
 | **Auth** | python-jose + bcrypt | JWT tokens + password hashing |
 | **Agent Framework** | LangChain | Prompt templates, chains, structured output |
+| **Observability** | Langfuse | End-to-end tracing of agent and LLM execution |
 | **Chat LLM** | GPT-4o-mini (OpenRouter) | Intent classification, chat, recommendations |
 | **Dense Embeddings** | text-embedding-3-small | 1536-dim semantic vectors |
 | **Sparse Embeddings** | FastEmbed BM25 | Keyword-based sparse vectors |
 | **Vector Database** | Qdrant (local) | Hybrid search with RRF fusion |
-| **Relational DB** | SQLite | User accounts, sessions, message persistence |
+| **Relational DB** | PostgreSQL | User accounts, sessions, message persistence |
 | **Web Scraping** | Playwright | Automated Kapruka.com product crawling |
