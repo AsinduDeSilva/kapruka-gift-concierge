@@ -92,6 +92,11 @@ def get_api_key(provider: str) -> Optional[str]:
 
 #qdrant
 QDRANT_COLLECTION_NAME = _get_nested(_PARAMS, "qdrant", "collection_name", default="kapruka_catalog")
+QDRANT_URL = os.getenv("QDRANT_URL")  # None = local file mode, "http://qdrant:6333" for Docker
+
+# database
+DATABASE_URL = os.getenv("POSTGRESQL_DB_URL")
+DB_SSL_MODE = os.getenv("DB_SSL_MODE", "disable")
 
 
 

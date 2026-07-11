@@ -16,7 +16,8 @@ from qdrant_client.models import (
 from src.infrastructure.config import (
     QDRANT_COLLECTION_NAME,
     EMBEDDING_DIM,
-    PROJECT_ROOT
+    PROJECT_ROOT,
+    QDRANT_URL
 )
 
 
@@ -28,7 +29,10 @@ def get_qdrant_client() -> QdrantClient:
     if _qdrant_client is not None:
         return _qdrant_client
 
-    _qdrant_client = QdrantClient(path=f"{PROJECT_ROOT}/data/qdrant_data")
+    if QDRANT_URL:
+        _qdrant_client = QdrantClient(url=QDRANT_URL)
+    else:
+        _qdrant_client = QdrantClient(path=f"{PROJECT_ROOT}/data/qdrant_data")
     return _qdrant_client
 
 

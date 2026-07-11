@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "Backend with Multi-agent system for Kapruka Gift Concierge"
 requires-python = ">=3.10,<3.13"
 dependencies = [
-    "playwright",
     "loguru",
     "PyYAML",
     "python-dotenv",
@@ -23,10 +22,15 @@ dependencies = [
     "python-multipart",
     "email-validator",
     "tzdata",
-    "jupyterlab",
-    "ipykernel",
     "psycopg2-binary",
     "langfuse"
+]
+
+[dependency-groups]
+dev = [
+    "playwright",
+    "jupyterlab",
+    "ipykernel",
 ]
 
 [build-system]
