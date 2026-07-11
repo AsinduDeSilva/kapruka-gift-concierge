@@ -1433,8 +1433,6 @@ dependencies = [
     { name = "email-validator" },
     { name = "fastapi" },
     { name = "fastembed" },
-    { name = "ipykernel" },
-    { name = "jupyterlab" },
     { name = "langchain" },
     { name = "langchain-community" },
     { name = "langchain-core" },
@@ -1443,7 +1441,6 @@ dependencies = [
     { name = "loguru" },
     { name = "openai" },
     { name = "passlib", extra = ["bcrypt"] },
-    { name = "playwright" },
     { name = "psycopg2-binary" },
     { name = "python-dotenv" },
     { name = "python-jose", extra = ["cryptography"] },
@@ -1455,13 +1452,18 @@ dependencies = [
     { name = "uvicorn" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "ipykernel" },
+    { name = "jupyterlab" },
+    { name = "playwright" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "email-validator" },
     { name = "fastapi" },
     { name = "fastembed" },
-    { name = "ipykernel" },
-    { name = "jupyterlab" },
     { name = "langchain" },
     { name = "langchain-community" },
     { name = "langchain-core" },
@@ -1470,7 +1472,6 @@ requires-dist = [
     { name = "loguru" },
     { name = "openai" },
     { name = "passlib", extras = ["bcrypt"] },
-    { name = "playwright" },
     { name = "psycopg2-binary" },
     { name = "python-dotenv" },
     { name = "python-jose", extras = ["cryptography"] },
@@ -1480,6 +1481,13 @@ requires-dist = [
     { name = "sqlalchemy" },
     { name = "tzdata" },
     { name = "uvicorn" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ipykernel" },
+    { name = "jupyterlab" },
+    { name = "playwright" },
 ]
 
 [[package]]
